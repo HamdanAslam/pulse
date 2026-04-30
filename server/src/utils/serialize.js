@@ -8,6 +8,7 @@ export function serializeUser(user) {
     avatarPublicId: user.avatarPublicId || "",
     banner: user.banner || "",
     bannerPublicId: user.bannerPublicId || "",
+    preferredStatus: user.preferredStatus || "online",
     status: user.status || "offline",
     bio: user.bio || "",
   };

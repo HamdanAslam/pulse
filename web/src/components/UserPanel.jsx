@@ -25,13 +25,14 @@ export const UserPanel = () => {
     const isMobile = useIsMobile();
     const [muted, setMuted] = useState(false);
     const [deafened, setDeafened] = useState(false);
-    const [status, setStatus] = useState(user?.status || "online");
+    const currentStatus = user?.preferredStatus || user?.status || "online";
+    const [status, setStatus] = useState(currentStatus);
     const [statusSaving, setStatusSaving] = useState(false);
     const [openSettings, setOpenSettings] = useState(false);
     const [openProfileMenu, setOpenProfileMenu] = useState(false);
     useEffect(() => {
-        setStatus(user?.status || "online");
-    }, [user?.status]);
+        setStatus(user?.preferredStatus || user?.status || "online");
+    }, [user?.preferredStatus, user?.status]);
     if (!user)
         return null;
     const setPresence = async (nextStatus) => {
@@ -43,7 +44,7 @@ export const UserPanel = () => {
             await updateProfile({ status: nextStatus });
         }
         catch {
-            setStatus(user?.status || "online");
+            setStatus(user?.preferredStatus || user?.status || "online");
         }
         finally {
             setStatusSaving(false);

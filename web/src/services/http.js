@@ -7,6 +7,19 @@ function normalizeApiBase(rawBase) {
 
 const API_BASE = normalizeApiBase(env.VITE_API_URL);
 
+function looksLikeHtmlDocument(value) {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
+}
+
+function normalizeHtmlErrorMessage(status, path) {
+  if (status === 404) {
+    return `API route not found: ${API_BASE}${path}. The deployed frontend is likely hitting a server or proxy that does not expose this backend route.`;
+  }
+  return `Expected an API response from ${API_BASE}${path}, but received an HTML page instead. Check the deployed API origin and reverse proxy configuration.`;
+}
+
 function normalizeErrorMessage(payload, status) {
   if (!payload) return `HTTP ${status}`;
   if (typeof payload === "string") return payload;
@@ -46,6 +59,10 @@ async function request(path, options = {}) {
       } catch {
         payload = text;
       }
+    }
+
+    if (looksLikeHtmlDocument(payload)) {
+      throw new Error(normalizeHtmlErrorMessage(response.status, path));
     }
 
     throw new Error(normalizeErrorMessage(payload, response.status));

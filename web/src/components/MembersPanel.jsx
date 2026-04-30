@@ -18,7 +18,8 @@ export const MembersPanel = ({ memberIds, serverId, ownerId, forceVisible = fals
                 avatar: authUser.avatar,
                 banner: authUser.banner,
                 bio: authUser.bio,
-                status: authUser.status ?? member?.status ?? "online",
+                preferredStatus: authUser.preferredStatus,
+                status: authUser.preferredStatus ?? authUser.status ?? member?.status ?? "online",
             };
         }
         return member;
