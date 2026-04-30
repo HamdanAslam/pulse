@@ -38,3 +38,5 @@ coverage/
 .npm/
 .eslintcache
 
+# Local deployment
+deploy-web.sh
