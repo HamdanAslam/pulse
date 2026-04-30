@@ -171,7 +171,9 @@ export const ChatProvider = ({ children }) => {
     });
     const offEdit = socket.on("message:edit", (payload) => {
       mockStore.messages = mockStore.messages.map((message) =>
-        message.id === payload.id ? { ...message, content: payload.content, edited: true } : message,
+        message.id === payload.id
+          ? { ...message, content: payload.content, embeds: payload.embeds || [], edited: true }
+          : message,
       );
       mockStore.emit();
     });

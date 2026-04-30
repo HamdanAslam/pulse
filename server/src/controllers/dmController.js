@@ -3,6 +3,7 @@ import { DMThread } from "../models/DMThread.js";
 import { Message } from "../models/Message.js";
 import { serializeMessage } from "../utils/serialize.js";
 import { emitNotification, emitToUsers } from "../socket.js";
+import { resolveEmbeds } from "../utils/embeds.js";
 
 function sortedParticipantIds(participants) {
   return [...new Set(participants.map(String))].sort();
@@ -87,6 +88,7 @@ export async function createDMMessage(req, res) {
     content: (req.body.content || "").trim(),
     replyTo: req.body.replyTo || null,
     attachments: req.body.attachments || [],
+    embeds: await resolveEmbeds(req.body.content || ""),
   });
   dm.lastMessageAt = new Date();
   await dm.save();

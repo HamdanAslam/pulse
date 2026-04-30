@@ -27,14 +27,34 @@ const resolveInviteCodeFromHref = (href) => {
         return "";
     }
 };
-const renderContent = (content, onInviteClick) => {
+const normalizeComparableUrl = (value) => {
+    if (!value)
+        return "";
+    const candidate = /^(https?:\/\/)/i.test(value) ? value : `https://${value}`;
+    try {
+        const url = new URL(candidate);
+        return url.href.replace(/\/$/, "");
+    }
+    catch {
+        return candidate.replace(/\/$/, "");
+    }
+};
+const renderContent = (content, embeds, onInviteClick) => {
+    const embeddedUrls = new Set((embeds || []).map((embed) => normalizeComparableUrl(embed.sourceUrl)));
     const parts = content.split(URL_RE);
-    return parts.filter(Boolean).map((part, index) => {
+    let hasVisibleContent = false;
+    const nodes = parts.filter(Boolean).map((part, index) => {
         const isUrl = /^(https?:\/\/|www\.)/i.test(part);
-        if (!isUrl)
+        if (!isUrl) {
+            if (part.trim())
+                hasVisibleContent = true;
             return <span key={`${part}-${index}`}>{part}</span>;
+        }
+        if (embeddedUrls.has(normalizeComparableUrl(part)))
+            return null;
         const href = part.startsWith("http") ? part : `https://${part}`;
         const inviteCode = resolveInviteCodeFromHref(href);
+        hasVisibleContent = true;
         return (<a key={`${href}-${index}`} href={href} target={inviteCode ? undefined : "_blank"} rel={inviteCode ? undefined : "noreferrer"} onClick={(event) => {
                 if (!inviteCode)
                     return;
@@ -43,6 +63,24 @@ const renderContent = (content, onInviteClick) => {
             }} className="break-all text-primary underline underline-offset-2 hover:opacity-80">
         {part}
       </a>);
+    });
+    return { nodes, hasVisibleContent };
+};
+const renderEmbeds = (embeds = []) => {
+    return embeds.map((embed) => {
+        if (embed.type === "gif" && embed.imageUrl) {
+            return (<a key={`${embed.sourceUrl}-${embed.imageUrl}`} href={embed.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl border border-border bg-surface-2 transition-opacity hover:opacity-95">
+              <img src={embed.imageUrl} alt={embed.title || "GIF embed"} className="max-h-[24rem] w-full object-cover"/>
+            </a>);
+        }
+        return (<a key={`${embed.sourceUrl}-${embed.url}`} href={embed.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl border border-border bg-surface-2 transition-colors hover:border-primary/40">
+            {embed.imageUrl && <img src={embed.imageUrl} alt={embed.title || embed.siteName || "Link preview"} className="max-h-64 w-full object-cover"/>}
+            <div className="flex flex-col gap-1 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{embed.siteName || "Preview"}</p>
+              {embed.title && <p className="line-clamp-2 text-sm font-semibold text-foreground">{embed.title}</p>}
+              {embed.description && <p className="line-clamp-3 text-sm text-muted-foreground">{embed.description}</p>}
+            </div>
+          </a>);
     });
 };
 const MessageItemImpl = ({ message: m, grouped, isSelf, selfId, onReact, onEdit, onDelete }) => {
@@ -53,6 +91,8 @@ const MessageItemImpl = ({ message: m, grouped, isSelf, selfId, onReact, onEdit,
     const [draft, setDraft] = useState(m.content);
     const [inviteCode, setInviteCode] = useState("");
     const activeServer = useMemo(() => servers.find((server) => server.id === activeServerId), [servers, activeServerId]);
+    const { nodes: contentNodes, hasVisibleContent } = renderContent(m.content, m.embeds, setInviteCode);
+    const embedNodes = renderEmbeds(m.embeds);
     const canDelete = isSelf || (m.contextType === "server" && Boolean(activeServer?.permissions?.canDeleteMessages || activeServer?.permissions?.isOwner));
     const canEdit = isSelf;
     useEffect(() => {
@@ -78,8 +118,8 @@ const MessageItemImpl = ({ message: m, grouped, isSelf, selfId, onReact, onEdit,
         setEditing(false);
     };
     return (<motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className={cn("group relative mx-2 rounded-lg px-2 py-1.5 hover:bg-surface-2/60 sm:mx-3", grouped ? "mt-0.5" : "mt-3")}>
-      <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-3">
-        <div className="flex justify-center pt-0.5">
+      <div className="grid items-start grid-cols-[40px_minmax(0,1fr)] gap-3">
+        <div className="flex justify-center self-start pt-0.5">
           {!grouped ? (<ProfilePopover userId={m.authorId} side="right" align="start">
               <button className="rounded-full transition-transform hover:scale-105">
                 <Avatar avatar={author?.avatar ?? "👤"} name={author?.displayName} size={36}/>
@@ -119,10 +159,12 @@ const MessageItemImpl = ({ message: m, grouped, isSelf, selfId, onReact, onEdit,
                 <span className="text-xs text-muted-foreground">Enter to save, Shift+Enter for newline, Esc to cancel</span>
               </div>
             </div>) : (<>
-              <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/95">
-                {renderContent(m.content, setInviteCode)}
-                {m.edited && <span className="ml-1 text-[10px] text-muted-foreground">(edited)</span>}
-              </p>
+              {hasVisibleContent && (<p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/95">
+                  {contentNodes}
+                  {m.edited && <span className="ml-1 text-[10px] text-muted-foreground">(edited)</span>}
+                </p>)}
+              {embedNodes.length > 0 && <div className="mt-2 flex max-w-xl flex-col gap-2">{embedNodes}</div>}
+              {!hasVisibleContent && embedNodes.length > 0 && m.edited && <p className="mt-1 text-[10px] text-muted-foreground">(edited)</p>}
             </>)}
           {m.reactions && m.reactions.length > 0 && (<div className="mt-2 flex flex-wrap gap-1.5">
               {m.reactions.map(r => {

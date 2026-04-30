@@ -4,6 +4,7 @@ import { DMThread } from "../models/DMThread.js";
 import { Message } from "../models/Message.js";
 import { Membership } from "../models/Membership.js";
 import { emitToChannel, emitToUsers } from "../socket.js";
+import { resolveEmbeds } from "../utils/embeds.js";
 import { PERMISSIONS, hasPermission, resolveMemberPermissions } from "../utils/permissions.js";
 import { serializeMessage } from "../utils/serialize.js";
 
@@ -43,6 +44,7 @@ export async function createChannelMessage(req, res) {
     content: (req.body.content || "").trim(),
     replyTo: req.body.replyTo || null,
     attachments: req.body.attachments || [],
+    embeds: await resolveEmbeds(req.body.content || ""),
   });
   const payload = serializeMessage(message);
   emitToChannel(String(channel._id), "message:new", payload);
@@ -64,8 +66,14 @@ export async function editMessage(req, res) {
   }
   message.content = (req.body.content || "").trim();
   message.editedAt = new Date();
+  message.embeds = await resolveEmbeds(message.content);
   await message.save();
-  const payload = { id: String(message._id), content: message.content, edited: true };
+  const payload = {
+    id: String(message._id),
+    content: message.content,
+    edited: true,
+    embeds: serializeMessage(message).embeds,
+  };
   if (message.contextType === "server") emitToChannel(String(message.channelId), "message:edit", payload);
   if (message.contextType === "dm") {
     const thread = await DMThread.findById(message.dmThreadId).lean();

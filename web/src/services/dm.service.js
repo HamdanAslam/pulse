@@ -27,9 +27,15 @@ export async function listDMMessages(dmId) {
 }
 
 export async function sendDMMessage(dmId, content, replyTo, attachments) {
-  return http.post(`/dms/${dmId}/messages`, {
+  const message = await http.post(`/dms/${dmId}/messages`, {
     content,
     replyTo,
     attachments: attachments || [],
   });
+  const exists = mockStore.messages.some((item) => item.id === message.id);
+  if (!exists) {
+    mockStore.messages = [...mockStore.messages, message].sort((a, b) => a.createdAt - b.createdAt);
+    mockStore.emit();
+  }
+  return message;
 }

@@ -37,5 +37,16 @@ export function serializeMessage(message) {
       url: attachment.url,
       name: attachment.name,
     })),
+    embeds: (message.embeds || []).map((embed) => ({
+      type: embed.type,
+      sourceUrl: embed.sourceUrl,
+      url: embed.url,
+      title: embed.title,
+      description: embed.description,
+      siteName: embed.siteName,
+      imageUrl: embed.imageUrl,
+      width: embed.width || 0,
+      height: embed.height || 0,
+    })),
   };
 }

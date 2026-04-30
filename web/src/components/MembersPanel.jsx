@@ -2,10 +2,27 @@ import { Avatar } from "./Avatar";
 import { ProfilePopover } from "./ProfilePopover";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/contexts/ChatContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Crown } from "lucide-react";
 export const MembersPanel = ({ memberIds, serverId, ownerId, forceVisible = false, }) => {
-    const { getUser, getMemberRoleColor } = useChat();
-    const members = memberIds.map(getUser).filter(Boolean);
+    const { user: authUser } = useAuth();
+    const { getUser, getMemberRoleColor, selfId } = useChat();
+    const members = memberIds.map((memberId) => {
+        const member = getUser(memberId);
+        if (memberId === selfId && authUser) {
+            return {
+                ...member,
+                id: selfId,
+                username: authUser.username,
+                displayName: authUser.displayName,
+                avatar: authUser.avatar,
+                banner: authUser.banner,
+                bio: authUser.bio,
+                status: authUser.status ?? member?.status ?? "online",
+            };
+        }
+        return member;
+    }).filter(Boolean);
     const groups = {
         Online: members.filter(m => m.status === "online"),
         Idle: members.filter(m => m.status === "idle"),

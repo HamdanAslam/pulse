@@ -43,8 +43,8 @@ export const ProfilePopover = ({ userId, children, side = "right", align = "star
             displayName: authUser.displayName,
             avatar: authUser.avatar,
             banner: authUser.banner,
-            status: baseUser?.status ?? "online",
-            bio: baseUser?.bio,
+            status: authUser.status ?? baseUser?.status ?? "online",
+            bio: authUser.bio ?? baseUser?.bio,
             email: authUser.email,
         }
         : baseUser;

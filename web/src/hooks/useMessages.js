@@ -24,11 +24,11 @@ export const useMessages = (channelId) => {
 };
 
 export const useSendMessage = () =>
-  useCallback((channelId, content, replyTo) => {
+  useCallback((channelId, content, replyTo, attachments) => {
     if (!content.trim()) return;
     const isDM = mockStore.dms.some((dm) => dm.id === channelId);
-    if (isDM) return dmService.sendDMMessage(channelId, content, replyTo);
-    return chatService.sendMessage(channelId, content, replyTo);
+    if (isDM) return dmService.sendDMMessage(channelId, content, replyTo, attachments);
+    return chatService.sendMessage(channelId, content, replyTo, attachments);
   }, []);
 
 export const useReact = () =>

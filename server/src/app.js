@@ -7,6 +7,7 @@ import friendRoutes from "./routes/friendRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import dmRoutes from "./routes/dmRoutes.js";
+import gifRoutes from "./routes/gifRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
@@ -42,6 +43,7 @@ export function createApp() {
   app.use("/api/servers", serverRoutes);
   app.use("/api", messageRoutes);
   app.use("/api/dms", dmRoutes);
+  app.use("/api/gifs", gifRoutes);
   app.use("/api/uploads", uploadRoutes);
 
   app.use((err, _req, res, _next) => {

@@ -27,6 +27,9 @@ export const env = {
     clientSecret: readEnv("DISCORD_CLIENT_SECRET"),
     redirectUri: readEnv("DISCORD_REDIRECT_URI"),
   },
+  giphy: {
+    apiKey: readEnv("GIPHY_API_KEY"),
+  },
 };
 
 if (!env.mongoUri) {

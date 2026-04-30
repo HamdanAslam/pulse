@@ -17,17 +17,23 @@ export async function listMessages(channelId) {
 }
 
 export async function sendMessage(channelId, content, replyTo, attachments) {
-  return http.post(`/channels/${channelId}/messages`, {
+  const message = await http.post(`/channels/${channelId}/messages`, {
     content,
     replyTo,
     attachments: attachments || [],
   });
+  const exists = mockStore.messages.some((item) => item.id === message.id);
+  if (!exists) {
+    mockStore.messages = [...mockStore.messages, message].sort((a, b) => a.createdAt - b.createdAt);
+    mockStore.emit();
+  }
+  return message;
 }
 
 export async function editMessage(id, content) {
   const payload = await http.patch(`/messages/${id}`, { content });
   mockStore.messages = mockStore.messages.map((msg) =>
-    msg.id === id ? { ...msg, content: payload.content, edited: true } : msg,
+    msg.id === id ? { ...msg, content: payload.content, embeds: payload.embeds || [], edited: true } : msg,
   );
   mockStore.emit();
 }
