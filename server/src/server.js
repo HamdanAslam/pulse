@@ -8,7 +8,7 @@ async function bootstrap() {
   await connectDb();
   const app = createApp();
   const server = http.createServer(app);
-  initSocket(server, env.clientUrl);
+  initSocket(server, env.clientUrls);
 
   server.listen(env.port, () => {
     console.log(`API listening on http://localhost:${env.port}`);

@@ -7,22 +7,6 @@ import { cn } from "@/lib/utils";
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-const getBaseCrop = (naturalWidth, naturalHeight, aspect) => {
-  const imageAspect = naturalWidth / naturalHeight;
-
-  if (imageAspect > aspect) {
-    return {
-      width: naturalHeight * aspect,
-      height: naturalHeight,
-    };
-  }
-
-  return {
-    width: naturalWidth,
-    height: naturalWidth / aspect,
-  };
-};
-
 export const ImageCropDialog = ({
   open,
   onOpenChange,
@@ -44,6 +28,14 @@ export const ImageCropDialog = ({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const cropFrameStyle = useMemo(
+    () => ({
+      aspectRatio: `${aspect}`,
+      maxHeight: aspect > 1.2 ? "50dvh" : "56dvh",
+      maxWidth: aspect <= 1.2 ? "min(100%, 56dvh)" : undefined,
+    }),
+    [aspect],
+  );
 
   // Load image and reset state
   useEffect(() => {
@@ -227,13 +219,13 @@ export const ImageCropDialog = ({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
-      className={cn("sm:max-w-2xl", aspect > 1.5 && "sm:max-w-3xl")}
+      className={cn("max-h-[90dvh] overflow-y-auto sm:max-w-2xl", aspect > 1.5 && "sm:max-w-3xl")}
     >
       <div className="flex flex-col gap-6 py-4">
         <div 
           ref={containerRef}
-          className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-surface-2 shadow-inner sm:aspect-[16/9]"
-          style={aspect > 1.5 ? { aspectRatio: `${aspect}` } : undefined}
+          className="relative mx-auto w-full overflow-hidden rounded-2xl border border-border bg-surface-2 shadow-inner"
+          style={cropFrameStyle}
         >
           {/* Main Frame */}
           <div

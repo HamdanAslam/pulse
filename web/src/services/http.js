@@ -1,5 +1,11 @@
 const env = import.meta.env || {};
-const API_BASE = env.VITE_API_URL || "http://localhost:4000/api";
+
+function normalizeApiBase(rawBase) {
+  if (!rawBase) return "/api";
+  return rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+}
+
+const API_BASE = normalizeApiBase(env.VITE_API_URL);
 
 function normalizeErrorMessage(payload, status) {
   if (!payload) return `HTTP ${status}`;

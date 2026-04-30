@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 import { MessageItem } from "./MessageItem";
 import { channelIcon } from "./channelIcon";
-import { TypingIndicator } from "./TypingIndicator";
 const MESSAGE_GROUP_WINDOW_MS = 5 * 60000;
 const formatDay = (ts) => {
     const d = new Date(ts);
@@ -53,7 +52,5 @@ export const MessageList = ({ channelId, channelType, title, topic, messages, se
             })}
           </div>
         </div>))}
-
-      <TypingIndicator typers={typers}/>
     </div>);
 };

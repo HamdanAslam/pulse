@@ -1,4 +1,9 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+function normalizeApiBase(rawBase) {
+  if (!rawBase) return "/api";
+  return rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
 export async function uploadImage(file) {
   const formData = new FormData();

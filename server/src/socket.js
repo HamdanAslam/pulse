@@ -5,6 +5,13 @@ import { User } from "./models/User.js";
 let ioInstance = null;
 const userSockets = new Map();
 
+async function broadcastPresence(userId) {
+  if (!ioInstance) return;
+  const user = await User.findById(userId).lean();
+  if (!user) return;
+  ioInstance.emit("presence:update", { userId: String(userId), status: user.status || "offline" });
+}
+
 function parseCookie(rawCookie = "") {
   return rawCookie
     .split(";")
@@ -54,8 +61,12 @@ export function initSocket(httpServer, corsOrigin) {
     if (!userId) return;
     addSocket(userId, socket.id);
     socket.join(`user:${userId}`);
-    await User.findByIdAndUpdate(userId, { status: "online" });
-    io.emit("presence:update", { userId, status: "online" });
+    const user = await User.findById(userId);
+    if (user) {
+      user.status = user.preferredStatus === "offline" ? "offline" : user.preferredStatus || "online";
+      await user.save();
+      await broadcastPresence(userId);
+    }
 
     socket.on("channel:join", ({ channelId }) => {
       if (!channelId) return;
@@ -80,7 +91,7 @@ export function initSocket(httpServer, corsOrigin) {
       const remaining = removeSocket(userId, socket.id);
       if (!remaining) {
         await User.findByIdAndUpdate(userId, { status: "offline" });
-        io.emit("presence:update", { userId, status: "offline" });
+        await broadcastPresence(userId);
       }
     });
   });
@@ -104,4 +115,13 @@ export function emitToUser(userId, event, payload) {
 
 export function emitNotification(userIds, payload) {
   emitToUsers(userIds, "notify", payload);
+}
+
+export async function syncUserPresence(userId) {
+  const socketCount = userSockets.get(String(userId))?.size || 0;
+  const user = await User.findById(userId);
+  if (!user) return;
+  user.status = socketCount ? user.preferredStatus || "online" : "offline";
+  await user.save();
+  await broadcastPresence(userId);
 }

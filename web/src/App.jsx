@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import DiscordComplete from "./pages/DiscordComplete";
 import ForgotPassword from "./pages/ForgotPassword";
 import AppLayout from "./pages/AppLayout";
 import NotFound from "./pages/NotFound";
@@ -69,6 +70,14 @@ const App = () => (
                 element={
                   <RequireGuest>
                     <ForgotPassword />
+                  </RequireGuest>
+                }
+              />
+              <Route
+                path="/auth/discord/complete"
+                element={
+                  <RequireGuest>
+                    <DiscordComplete />
                   </RequireGuest>
                 }
               />

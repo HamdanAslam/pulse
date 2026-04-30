@@ -7,6 +7,7 @@ import { useIsMobile, useIsTabletOrBelow } from "@/hooks/useBreakpoint";
 import { MessageList } from "./MessageList";
 import { Composer } from "./Composer";
 import { channelIcon } from "./channelIcon";
+import { TypingIndicator } from "./TypingIndicator";
 export const ChatView = ({ channelId, title, topic, channelType = "text", onToggleMembers, showMembersToggle, }) => {
     const { sendMessage, addReaction, editMessage, deleteMessage, typing, notifyTyping, selfId, setLeftPanelOpen, setMembersPanelOpen } = useChat();
     const messages = useMessages(channelId);
@@ -62,7 +63,10 @@ export const ChatView = ({ channelId, title, topic, channelType = "text", onTogg
 
       <MessageList channelId={channelId} channelType={channelType} title={title} topic={topic} messages={messages} selfId={selfId} typers={typers} onReact={addReaction} onEdit={handleEdit} onDelete={handleDelete}/>
 
-      <Composer channelType={channelType} title={title} onSend={(content) => sendMessage(channelId, content)} onTyping={() => notifyTyping(channelId)}/>
+      <div className="shrink-0">
+        <TypingIndicator typers={typers}/>
+        <Composer channelType={channelType} title={title} onSend={(content) => sendMessage(channelId, content)} onTyping={() => notifyTyping(channelId)}/>
+      </div>
     </section>);
 };
 const IconBtn = ({ children, label, onClick }) => (<Tooltip>

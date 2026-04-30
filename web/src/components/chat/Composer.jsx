@@ -1,19 +1,28 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Send, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 export const Composer = ({ channelType, title, onSend, onTyping }) => {
     const [draft, setDraft] = useState("");
+    const [sending, setSending] = useState(false);
+    const sendingRef = useRef(false);
     const submit = async (e) => {
         e.preventDefault();
-        if (!draft.trim())
+        const content = draft.trim();
+        if (!content || sendingRef.current)
             return;
+        sendingRef.current = true;
+        setSending(true);
         try {
-            await onSend(draft);
+            await onSend(content);
             setDraft("");
         }
         catch (error) {
             toast.error(error?.message || "Could not send message");
+        }
+        finally {
+            sendingRef.current = false;
+            setSending(false);
         }
     };
     return (<div className="px-3 sm:px-4 pt-1" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}>
@@ -26,11 +35,11 @@ export const Composer = ({ channelType, title, onSend, onTyping }) => {
                 e.preventDefault();
                 submit(e);
             }
-        }} placeholder={`Message ${channelType === "text" ? "#" : ""}${title}`} rows={1} className="max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-1.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none"/>
+        }} placeholder={`Message ${channelType === "text" ? "#" : ""}${title}`} rows={1} disabled={sending} className="max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-1.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none disabled:cursor-wait"/>
         <button type="button" aria-label="Emoji" className="hidden sm:inline-flex rounded-full p-2 text-muted-foreground hover:bg-surface-3 hover:text-foreground">
           <Smile className="h-5 w-5"/>
         </button>
-        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()} className="h-10 w-10 shrink-0 rounded-full bg-gradient-primary text-primary-foreground hover:opacity-90 disabled:opacity-40">
+        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || sending} className="h-10 w-10 shrink-0 rounded-full bg-gradient-primary text-primary-foreground hover:opacity-90 disabled:opacity-40">
           <Send className="h-4 w-4"/>
         </Button>
       </form>

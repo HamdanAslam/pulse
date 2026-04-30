@@ -1,0 +1,17 @@
+chat.p196hql.qzz.io {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  handle /api/* {
+    reverse_proxy localhost:4000
+  }
+
+  handle /socket.io/* {
+    reverse_proxy localhost:4000
+  }
+
+  handle {
+    reverse_proxy localhost:5173
+  }
+}

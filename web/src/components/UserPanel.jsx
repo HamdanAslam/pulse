@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "./Avatar";
 import { Headphones, Mic, MicOff, Settings as SettingsIcon, VolumeX } from "lucide-react";
@@ -21,15 +21,34 @@ const statusDot = {
     offline: "bg-muted-foreground/60",
 };
 export const UserPanel = () => {
-    const { user } = useAuth();
+    const { user, updateProfile } = useAuth();
     const isMobile = useIsMobile();
     const [muted, setMuted] = useState(false);
     const [deafened, setDeafened] = useState(false);
-    const [status, setStatus] = useState("online");
+    const [status, setStatus] = useState(user?.status || "online");
+    const [statusSaving, setStatusSaving] = useState(false);
     const [openSettings, setOpenSettings] = useState(false);
     const [openProfileMenu, setOpenProfileMenu] = useState(false);
+    useEffect(() => {
+        setStatus(user?.status || "online");
+    }, [user?.status]);
     if (!user)
         return null;
+    const setPresence = async (nextStatus) => {
+        if (nextStatus === status || statusSaving)
+            return;
+        setStatus(nextStatus);
+        setStatusSaving(true);
+        try {
+            await updateProfile({ status: nextStatus });
+        }
+        catch {
+            setStatus(user?.status || "online");
+        }
+        finally {
+            setStatusSaving(false);
+        }
+    };
     const profileTrigger = (<button className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent/60">
       <Avatar avatar={user.avatar} name={user.displayName} size={32} status={status}/>
       <div className="min-w-0 flex-1">
@@ -55,7 +74,7 @@ export const UserPanel = () => {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {statusItems.map((s) => (<button key={s} onClick={() => setStatus(s)} className={cn("flex items-center gap-2 rounded-xl border px-3 py-2 text-sm", status === s ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface-1 text-muted-foreground")}>
+                {statusItems.map((s) => (<button key={s} onClick={() => setPresence(s)} disabled={statusSaving} className={cn("flex items-center gap-2 rounded-xl border px-3 py-2 text-sm disabled:cursor-wait disabled:opacity-60", status === s ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface-1 text-muted-foreground")}>
                     <span className={cn("h-2.5 w-2.5 rounded-full", statusDot[s])}/>
                     {statusLabel[s]}
                   </button>))}
@@ -79,7 +98,7 @@ export const UserPanel = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {statusItems.map((s) => (<DropdownMenuItem key={s} onClick={() => setStatus(s)} className="gap-2">
+              {statusItems.map((s) => (<DropdownMenuItem key={s} onClick={() => setPresence(s)} disabled={statusSaving} className="gap-2">
                   <span className={cn("h-2.5 w-2.5 rounded-full", statusDot[s])}/>
                   {statusLabel[s]}
                 </DropdownMenuItem>))}

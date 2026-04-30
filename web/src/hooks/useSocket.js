@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
+const rawSocketUrl = import.meta.env.VITE_SOCKET_URL?.trim();
+const SOCKET_URL = rawSocketUrl ? rawSocketUrl.replace(/\/$/, "") : undefined;
 
 export const useSocket = () => {
   const socketRef = useRef(null);
@@ -9,6 +10,7 @@ export const useSocket = () => {
 
   useEffect(() => {
     const socket = io(SOCKET_URL, {
+      path: "/socket.io",
       withCredentials: true,
       transports: ["websocket"],
       autoConnect: true,
